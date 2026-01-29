@@ -56,6 +56,7 @@ pipeline {
                     bat '''
                     docker logout
                     echo %DOCKER_PASS%| docker login -u %DOCKER_USER% --password-stdin
+                    docker tag mvnproj:1.0 %DOCKER_USER%/myapp:latest
                     docker push %DOCKER_USER%/myapp:latest
                     '''
                 }
@@ -67,7 +68,7 @@ pipeline {
                 echo "Running Docker container"
                 bat '''
                 docker rm -f myjavaapp || exit 0
-                docker run --name myjavaapp %DOCKER_USER%/myapp:latest
+                docker run --name myjavaapp priyanrk17/myapp:latest
                 '''
             }
         }
