@@ -4,7 +4,6 @@ pipeline {
      tools{
          jdk 'java17'
          maven 'Maven'
-		 git 'DefaultGit'
     }
     stages {
         stage('Checkout Code') {
