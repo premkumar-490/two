@@ -1,7 +1,6 @@
-
 pipeline {
     agent any
-     tools{
+    tools{
          jdk 'java17'
          maven 'Maven'
     }
@@ -12,54 +11,20 @@ pipeline {
                git branch: 'main', credentialsId: 'mygithubcred', url: 'https://github.com/premkumar-490/two.git'
             }
         }
-         stage('Test the Project') {
-            steps {
-               echo "Test my JAVA project"
-               bat 'mvn clean test' 
-            }
-              post {
-                  always {
-                         junit '**/target/surefire-reports/*.xml'
-                         echo 'Test Run succeeded!'          
-					}
-				}
-		}
         stage('Build Project') {
             steps {
                echo "Building my JAVA project"
-               bat 'mvn clean package -DskipTests' 
+               bat 'mvn clean package' 
             }
         }
-        stage(' Build the Docker Image') {
+        stage('Test The Appln') {
             steps {
-               echo "Build the Docker Image for mvn project"
-               bat 'docker build -t mvnproj:1.0 .'
+               echo "Testing my JAVA project"
             }
         }
-         stage('Push Docker Image to DockerHub') {
+        stage('Deploy the project') {
             steps {
-                echo "Login + Tag + Push"
-                withCredentials([usernamePassword(credentialsId: 'dockerhubpwd', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat """
-                    echo %DOCKER_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin
-                    if %ERRORLEVEL% NEQ 0 exit /b 1
-
- 
-
-                    docker tag %LOCAL_IMAGE% %DOCKERHUB_USER%/%IMAGE_NAME%:%IMAGE_TAG%
-                    docker push %DOCKERHUB_USER%/%IMAGE_NAME%:%IMAGE_TAG%
-                    """
-                }
-            }
-        }
-       
-         stage('Deploy the project using Container') {
-            steps {
-                echo "Running Java Application"
-                bat '''
-	               docker rm -f myjavaappcont || exit 0
-	               docker run --name myjavaappcont premkumar46/mymvnproj:latest
-	           '''
+                echo "Project is getting Deployed"
             }
         }
     }
