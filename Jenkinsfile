@@ -1,97 +1,98 @@
 pipeline {
-agent any
+    agent any
 
-tools {
-jdk 'java17'
-maven 'Maven'
-}
+    tools {
+        jdk 'java17'
+        maven 'Maven'
+    }
 
-stages {
+    stages {
 
-stage('Checkout Code') {
-steps {
-git branch: 'main',
-credentialsId: 'mygithubcred',
-url: 'https://github.com/premkumar-490/two.git'
-}
-}
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'mygithubcred',
+                    url: 'https://github.com/premkumar-490/two.git'
+            }
+        }
 
-stage('Test Project') {
-steps {
-bat 'mvn clean test'
-}
-post {
-always {
-junit '**/target/surefire-reports/*.xml'
-}
-}
-}
+        stage('Test Project') {
+            steps {
+                bat 'mvn clean test'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
 
-stage('Build Project') {
-steps {
-bat 'mvn clean package -DskipTests'
-}
-}
+        stage('Build Project') {
+            steps {
+                bat 'mvn clean package -DskipTests'
+            }
+        }
 
-stage('Build Docker Image') {
-steps {
-bat 'docker build -t mymvnproj:latest .'
-}
-}
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t mymvnproj:latest .'
+            }
+        }
 
-stage('Push Docker Image') {
-steps {
-withCredentials([usernamePassword(
-credentialsId: 'dockerhubpwd',
-usernameVariable: 'DOCKER_USER',
-passwordVariable: 'DOCKER_PASS'
-)]) {
-bat '''
-echo %DOCKER_PASS%| docker login -u %DOCKER_USER% --password-stdin
-docker tag mymvnproj:latest %DOCKER_USER%/mymvnproj:latest
-docker push %DOCKER_USER%/mymvnproj:latest
-'''
-}
-}
-}
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhubpwd',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    bat '''
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    docker tag mymvnproj:latest %DOCKER_USER%/mymvnproj:latest
+                    docker push %DOCKER_USER%/mymvnproj:latest
+                    '''
+                }
+            }
+        }
 
-stage('Deploy to Kubernetes') {
-steps {
-bat '''
-"C:\\Minikube\\minikube.exe" start
-kubectl apply -f deployment.yaml
-timeout /t 20
-kubectl get pods
-kubectl apply -f services.yaml
-kubectl get svc
-'''
-}
-}
+        stage('Deploy to Kubernetes') {
+            steps {
+                bat '''
+                "C:\\Minikube\\minikube.exe" start
+                kubectl apply -f deployment.yaml
+                timeout /t 20
+                kubectl get pods
+                kubectl apply -f services.yaml
+                kubectl get svc
+                '''
+            }
+        }
 
-stage('Parallel Operations') {
-parallel {
+        stage('Parallel Operations') {
+            parallel {
 
-stage('Enable Metrics') {
-steps {
-bat '"C:\\Minikube\\minikube.exe" addons enable metrics-server'
-}
-}
+                stage('Enable Metrics') {
+                    steps {
+                        bat '"C:\\Minikube\\minikube.exe" addons enable metrics-server'
+                    }
+                }
 
-stage('Verify Services') {
-steps {
-bat 'kubectl get svc'
-}
-}
-}
-}
-}
+                stage('Verify Services') {
+                    steps {
+                        bat 'kubectl get svc'
+                    }
+                }
+            }
+        }
+    }
 
-post {
-success {
-echo 'Pipeline executed successfully 🚀'
-}
-failure {
-echo 'Pipeline failed ❌'
-}
-}
+    post {
+        success {
+            echo 'Pipeline executed successfully 🚀'
+        }
+        failure {
+            echo 'Pipeline failed ❌'
+        }
+    }
 }
