@@ -176,5 +176,5 @@ failure {
 echo 'Pipeline failed ❌'
 }
 }
-}
->>>>>>> 5547ca5 (1)
+
+
